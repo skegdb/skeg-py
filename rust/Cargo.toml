@@ -1,0 +1,38 @@
+[package]
+name = "skeg-py-native"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "Apache-2.0"
+
+# Stay out of the main workspace: maturin builds this crate as a Python
+# extension with its own profile + lib type and shouldn't be a workspace
+# member of the Rust server.
+[workspace]
+
+
+[lib]
+# Built as a `cdylib` so maturin can pack it as a Python extension.
+# `extension-module` feature suppresses the libpython link, which is
+# the standard pattern for distributing wheels. The cdylib name must
+# match the `#[pymodule] fn _native(...)` symbol in lib.rs; maturin
+# renames the output to `skeg/_native.so` per the pyproject mapping.
+name = "_native"
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+# We piggy-back on the workspace's skeg-client crate. Because this crate
+# lives outside the workspace (under adapters/python/rust/) we point at
+# it by path rather than as a workspace member.
+skeg-client = { path = "../../../crates/skeg-client" }
+skeg-proto = { path = "../../../crates/skeg-proto" }
+skeg-vector = { path = "../../../crates/skeg-vector" }
+tokio = { version = "1", features = ["full"] }
+bytes = "1"
+pyo3 = { version = "0.22", features = ["extension-module", "abi3-py310"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

@@ -1,0 +1,8 @@
+cargo:rerun-if-env-changed=PYO3_CONFIG_FILE
+cargo:rerun-if-env-changed=PYO3_NO_PYTHON
+cargo:rerun-if-env-changed=PYO3_ENVIRONMENT_SIGNATURE
+cargo:rerun-if-env-changed=PYO3_PYTHON
+cargo:rerun-if-env-changed=VIRTUAL_ENV
+cargo:rerun-if-env-changed=CONDA_PREFIX
+cargo:warning=Both VIRTUAL_ENV and CONDA_PREFIX are set. PyO3 will ignore both of these for locating the Python interpreter until you unset one of them.
+cargo:rerun-if-env-changed=PATH

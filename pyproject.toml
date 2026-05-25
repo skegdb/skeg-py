@@ -1,0 +1,55 @@
+[build-system]
+# Default build backend: maturin (Rust + Python). The pure-Python install
+# path works equally well via the lightweight wheel maturin produces with
+# an empty `[tool.maturin]` extension. If you want pure-Python only and
+# don't have a Rust toolchain, install with:
+#     SKEG_PY_PURE=1 pip install -e .
+# (the [tool.maturin] block below is skipped when SKEG_PY_PURE is set).
+requires = ["maturin>=1.4,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "skeg"
+version = "0.1.0a0"
+description = "Python client for skeg (KV+vector store)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "skeg authors" }]
+keywords = ["vector-store", "kv-store", "redis", "rag", "vamana"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+]
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    "pytest-timeout>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/skegdb/skeg-py"
+Repository = "https://github.com/skegdb/skeg-py"
+Issues = "https://github.com/skegdb/skeg-py/issues"
+
+[tool.maturin]
+# The Rust extension lives under rust/. The python package lives under
+# src/skeg/. maturin merges them: the compiled module is imported as
+# `skeg._native`, the Python files stay at `skeg.*`.
+manifest-path = "rust/Cargo.toml"
+module-name = "skeg._native"
+python-source = "src"
+features = ["pyo3/extension-module"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+timeout = 30
+addopts = "-v"
