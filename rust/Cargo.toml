@@ -22,12 +22,12 @@ crate-type = ["cdylib"]
 path = "src/lib.rs"
 
 [dependencies]
-# We piggy-back on the workspace's skeg-client crate. Because this crate
-# lives outside the workspace (under adapters/python/rust/) we point at
-# it by path rather than as a workspace member.
-skeg-client = { path = "../../../crates/skeg-client" }
-skeg-proto = { path = "../../../crates/skeg-proto" }
-skeg-vector = { path = "../../../crates/skeg-vector" }
+# Pinned to published versions on crates.io. maturin builds this crate
+# standalone (no parent workspace); bump these in lockstep with the
+# engine release.
+skeg-client = "0.1.0"
+skeg-proto = "0.1.1"
+skeg-vector = "0.1.1"
 tokio = { version = "1", features = ["full"] }
 bytes = "1"
 pyo3 = { version = "0.22", features = ["extension-module", "abi3-py310"] }
