@@ -109,13 +109,18 @@ class BinaryClient:
         self.close()
 
     def close(self) -> None:
-        if self._closed:
-            return
-        self._closed = True
-        try:
-            self._sock.close()
-        except OSError:
-            pass
+        """Close the underlying socket. Idempotent; safe to call from
+        any thread, even concurrently with an in-flight request: the
+        in-flight call will surface the socket shutdown as
+        `NotConnected` rather than crash with a half-closed read."""
+        with self._lock:
+            if self._closed:
+                return
+            self._closed = True
+            try:
+                self._sock.close()
+            except OSError:
+                pass
 
     # ── KV ───────────────────────────────────────────────────────────
 
@@ -164,8 +169,11 @@ class BinaryClient:
         return wire.decode_bool_response(body)
 
     def mget(self, keys: Iterable[bytes]) -> list[bytes | None]:
-        """Batch GET. Missing keys come back as None, order preserved."""
+        """Batch GET. Missing keys come back as None, order preserved.
+        An empty input returns an empty list without a round-trip."""
         ks = list(keys)
+        if not ks:
+            return []
         body = self._call(wire.OP_MGET, wire.encode_mget_payload(ks))
         return wire.decode_mget_response(body)
 
@@ -212,12 +220,16 @@ class BinaryClient:
         body = self._call(wire.OP_SHARDS, b"")
         return wire.decode_shards_response(body)
 
-    def vset(self, name: str, vec_id: int, vector: list[float] | tuple[float, ...]
-              ) -> None:
-        """Insert or replace a vector by integer id."""
+    def vset(self, name: str, vec_id: int,
+              vector: Iterable[float]) -> None:
+        """Insert or replace a vector by integer id.
+
+        `vector` accepts any iterable of floats: `list`, `tuple`,
+        `numpy.ndarray`, generator, etc. The adapter materialises it
+        into a `list[float]` at the call boundary."""
         self._call(
             wire.OP_VSET,
-            wire.encode_vset_payload(name, vec_id, list(vector)),
+            wire.encode_vset_payload(name, vec_id, _to_float_list(vector)),
         )
 
     def vget(self, name: str, vec_id: int) -> list[float] | None:
@@ -241,16 +253,18 @@ class BinaryClient:
             raise
         return wire.decode_bool_response(body)
 
-    def vsearch(self, name: str, query: list[float] | tuple[float, ...],
+    def vsearch(self, name: str, query: Iterable[float],
                  k: int = 10, l_search: int = 0) -> list[Hit]:
         """Approximate top-k nearest-neighbour search.
 
-        `l_search` overrides the index's default search-list size when
-        non-zero. Larger values trade latency for recall.
+        `query` accepts any iterable of floats (list, tuple, numpy
+        array, generator). `l_search` overrides the index's default
+        search-list size when non-zero; larger values trade latency
+        for recall.
         """
         body = self._call(
             wire.OP_VSEARCH,
-            wire.encode_vsearch_payload(name, list(query), k, l_search),
+            wire.encode_vsearch_payload(name, _to_float_list(query), k, l_search),
         )
         return [Hit(i, s) for i, s in wire.decode_vsearch_response(body)]
 
@@ -303,8 +317,26 @@ class BinaryClient:
             try:
                 chunk = self._sock.recv_into(view[got:], n - got)
             except (ConnectionError, OSError) as e:
-                raise ProtocolError(f"socket error: {e}") from e
+                # Connection-level failure: the socket is gone (peer
+                # RST, FIN, kernel-level error, or a concurrent
+                # close()). Surface as NotConnected so callers can
+                # distinguish a transport drop from a protocol bug.
+                raise NotConnected(f"socket error: {e}") from e
             if not chunk:
-                raise ProtocolError("peer closed mid-frame")
+                raise NotConnected("peer closed mid-frame")
             got += chunk
         return bytes(buf)
+
+
+def _to_float_list(values: Iterable[float]) -> list[float]:
+    """Materialise any float iterable into a `list[float]`.
+
+    Accepts `list`, `tuple`, `numpy.ndarray` (any dtype), generators,
+    and other iterables. NumPy arrays are converted via `.tolist()`
+    when present (cheaper than a Python-level loop) and otherwise
+    fall back to the generic `list(...)` path.
+    """
+    tolist = getattr(values, "tolist", None)
+    if callable(tolist):
+        return list(tolist())
+    return list(values)

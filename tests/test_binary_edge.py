@@ -235,3 +235,48 @@ def test_one_client_used_by_two_threads(binary_server: dict) -> None:
         t2.join()
         for v in results[0] + results[1]:
             assert v == b"v"
+
+
+def test_mget_empty_input_skips_round_trip(binary_server: dict) -> None:
+    """`mget([])` returns `[]` without touching the socket. Verifies the
+    fast path that lets callers thread empty lists through without a
+    server round-trip."""
+    with _client(binary_server) as c:
+        # Send a request first so the connection has a known good state.
+        c.ping()
+        assert c.mget([]) == []
+        # And the connection is still usable (we did not break the
+        # in-flight req_id sequence).
+        c.ping()
+
+
+def test_vset_accepts_tuple_and_generator(binary_server: dict) -> None:
+    """`vset` materialises any float iterable, not just `list`."""
+    with _client(binary_server) as c:
+        c.vindex_create("iter-vix", 4, kind="f32", backend="flat")
+        try:
+            # Tuple
+            c.vset("iter-vix", 1, (1.0, 0.0, 0.0, 0.0))
+            # Generator
+            c.vset("iter-vix", 2, (float(x) for x in (0.0, 1.0, 0.0, 0.0)))
+            hits = c.vsearch("iter-vix", [1.0, 0.0, 0.0, 0.0], k=2)
+            ids = {h.id for h in hits}
+            assert {1, 2}.issubset(ids)
+        finally:
+            c.vindex_drop("iter-vix")
+
+
+def test_vset_accepts_numpy_array_when_available(binary_server: dict) -> None:
+    """If numpy is installed, `vset` must accept its arrays unchanged.
+    Skip the test cleanly if numpy is not available rather than fail."""
+    np = pytest.importorskip("numpy")
+    with _client(binary_server) as c:
+        c.vindex_create("np-vix", 4, kind="f32", backend="flat")
+        try:
+            arr = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
+            c.vset("np-vix", 1, arr)
+            # vsearch also accepts numpy.
+            hits = c.vsearch("np-vix", arr, k=1)
+            assert hits and hits[0].id == 1
+        finally:
+            c.vindex_drop("np-vix")
