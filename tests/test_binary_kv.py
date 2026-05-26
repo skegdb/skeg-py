@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from skeg import BinaryClient, NotConnected, ServerError
+from skeg import BinaryClient, NotConnected
 
 
 def _client(server: dict) -> BinaryClient:

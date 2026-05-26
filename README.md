@@ -79,8 +79,8 @@ Build the index offline (one-shot), then point the client at the served
 copy:
 
 ```sh
-skeg-tool build --input embeddings.npy --output ./data --name notes
-skeg-server --mode serve --data-dir ./data --tier pq:128:256
+skeg-cli build --input embeddings.npy --output ./data --name notes
+skeg --mode serve --data-dir ./data --tier pq:128:256
 ```
 
 ```python

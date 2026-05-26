@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from skeg import RespClient, ServerError, ProtocolError
+from skeg import RespClient, ServerError
 
 
 def _client(server: dict) -> RespClient:

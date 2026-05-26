@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import enum
 import socket
-import struct
 import threading
 from dataclasses import dataclass
 from types import TracebackType

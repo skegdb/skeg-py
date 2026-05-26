@@ -14,7 +14,7 @@ if not getattr(skeg, "_HAS_NATIVE", False):
     pytest.skip("PyO3 backend not built; pip install -e . or maturin develop",
                 allow_module_level=True)
 
-from skeg._native import BinaryClient as NativeClient, Hit as NativeHit
+from skeg._native import BinaryClient as NativeClient  # noqa: E402
 
 
 def _native(server: dict) -> NativeClient:

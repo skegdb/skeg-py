@@ -11,8 +11,7 @@ import threading
 
 import pytest
 
-from skeg import BinaryClient, NotConnected, ProtocolError, ServerError
-from skeg import _wire as wire
+from skeg import BinaryClient, NotConnected, ServerError
 
 
 def _client(server: dict) -> BinaryClient:
