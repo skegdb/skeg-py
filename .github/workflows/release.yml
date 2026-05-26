@@ -3,6 +3,7 @@ name: Release to PyPI
 on:
   push:
     tags: ['v*']
+  workflow_dispatch: {}
 
 # Build wheels for the platforms skeg ships binaries for (macOS arm64,
 # Linux x86_64, Linux aarch64), plus an sdist as a fallback for any
