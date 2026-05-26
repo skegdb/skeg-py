@@ -3,8 +3,13 @@
 Python client for [skeg](https://github.com/skegdb/skeg), an
 SSD-primary KV+vector store designed for Personal AI Inference machines.
 
-**Status: alpha, pre-release.** Wire protocols are stable; the Python
-API surface may still change. Not yet published to PyPI.
+```sh
+pip install skeg              # pure-Python
+pip install 'skeg[fast]'      # PyO3-backed (binary wheels for macOS arm64, Linux x86_64, Linux aarch64)
+```
+
+Wire formats (skeg binary protocol v1 and the RESP3 subset) are frozen.
+The PyO3 backend mirrors the pure-Python `BinaryClient` API exactly.
 
 ## What's in the package
 
@@ -32,22 +37,13 @@ c = skeg.client(prefer_native=False)  # forces pure-Python
 
 ## Install
 
-### From source (this monorepo)
-
 ```sh
-# Pure-Python only (no Rust toolchain needed)
-SKEG_PY_PURE=1 pip install -e .
-
-# With PyO3 backend (needs Rust toolchain installed)
-pip install -e .
+pip install skeg              # pure-Python, zero dependencies
+pip install 'skeg[fast]'      # PyO3-backed; binary wheels for macOS arm64, Linux x86_64, Linux aarch64
 ```
 
-### From PyPI (when published)
-
-```sh
-pip install skeg              # pure-Python
-pip install 'skeg[fast]'      # PyO3-backed (binary wheels)
-```
+To build from source (e.g. on Windows or another arch), `pip install`
+will compile the PyO3 backend; set `SKEG_PY_PURE=1` to skip it.
 
 ## Quick start
 
@@ -118,18 +114,17 @@ print(c.skeg_whoami())  # "tenant=<hex> mode=tenant-aware"
 ## Testing
 
 ```sh
-# Build the server binaries first.
-cd ../..
-cargo build --release -p skeg-server
-
-cd adapters/python
+brew tap skegdb/tap
+brew install skeg
+git clone https://github.com/skegdb/skeg-py
+cd skeg-py
 pip install -e '.[test]'
-pytest
+SKEG_BIN=$(which skeg) SKEG_RESP3_BIN=$(which skeg-resp3) pytest
 ```
 
 The test fixture spawns one server per session and tears it down at
-the end. Set `SKEG_BIN` or `SKEG_RESP3_BIN` to point at custom binary
-paths.
+the end. `SKEG_BIN` / `SKEG_RESP3_BIN` may be omitted if `skeg` and
+`skeg-resp3` are on `$PATH`.
 
 ### Test-suite safety vs your data
 
@@ -148,25 +143,10 @@ KV state on. The pytest-spawned fixture is the safe default.
 
 ## Compatibility
 
-- Python 3.10+ (uses `from __future__ import annotations` and structural
-  types only; no 3.11+ features).
-- macOS, Linux. Windows untested.
-- Server protocol version 1 (the only version that exists). Wire format
-  is stable.
-
-## Status and roadmap
-
-This is alpha software. Not yet published to PyPI. Wire-level changes
-are unlikely (the binary header and RESP3 subset are frozen for v0.1).
-Python API may evolve before 1.0.
-
-- [x] Pure-Python binary client (KV + vector)
-- [x] Pure-Python RESP3 client (KV + SKEG.*)
-- [x] Tests against live server (binary + RESP)
-- [ ] PyO3 backend (in progress, see `rust/`)
-- [ ] Async client (asyncio) - design pending
-- [ ] Pipelining helper - currently one request at a time per connection
-- [ ] Streaming insert helper for high-throughput VSET batches
+- Python 3.10+ (one abi3 wheel covers 3.10, 3.11, 3.12, 3.13).
+- macOS arm64, Linux x86_64, Linux aarch64 (wheels). Other targets
+  build from sdist; set `SKEG_PY_PURE=1` to skip the PyO3 backend.
+- Server protocol version 1. Wire format is stable.
 
 ## License
 

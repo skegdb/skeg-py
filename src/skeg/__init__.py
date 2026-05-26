@@ -16,11 +16,12 @@ Quick start:
         c.vindex_create("notes", dim=1024, kind="int8")
         c.vset("notes", 1, [0.1, 0.2, ...])
         for hit in c.vsearch("notes", [0.1, 0.2, ...], k=10):
-            print(hit.id, hit.distance)
+            print(hit.id, hit.score)
 
-Status: alpha, pre-release. Wire formats are stable; the Python surface
-may still change. Not yet on PyPI. See README.md for the install path
-(pure-Python vs PyO3-backed).
+Wire formats (skeg binary protocol v1 and the RESP3 subset) are frozen
+on the server side. See README.md for the install paths (pure-Python
+default, or `pip install 'skeg[fast]'` for the PyO3-backed binary
+wheels).
 """
 from __future__ import annotations
 
@@ -64,4 +65,4 @@ __all__ = [
     "client",
 ]
 
-__version__ = "0.1.0a0"
+__version__ = "0.1.0"

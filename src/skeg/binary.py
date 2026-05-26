@@ -72,12 +72,6 @@ class Hit:
     id: int
     score: float
 
-    # Back-compat alias for callers that read `hit.distance` from earlier
-    # alpha versions; deprecated, will be removed in 0.2.
-    @property
-    def distance(self) -> float:
-        return self.score
-
 
 class BinaryClient:
     """Synchronous TCP client for skeg's binary protocol.

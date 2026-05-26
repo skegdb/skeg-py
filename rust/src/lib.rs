@@ -77,13 +77,6 @@ impl Hit {
     fn __repr__(&self) -> String {
         format!("Hit(id={}, score={})", self.id, self.score)
     }
-
-    /// Back-compat alias for the field that was called `distance` in
-    /// the earliest alpha. Will be removed in 0.2.
-    #[getter]
-    fn distance(&self) -> f32 {
-        self.score
-    }
 }
 
 #[pyclass(name = "BinaryClient")]

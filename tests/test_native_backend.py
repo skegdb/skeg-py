@@ -68,9 +68,7 @@ def test_native_vector_roundtrip(binary_server: dict) -> None:
         hits = c.vsearch("native-vix", v, 1)
         assert len(hits) == 1
         assert hits[0].id == 1
-        # Hit.score plus back-compat distance alias both work.
         assert hits[0].score > 0.99
-        assert hits[0].distance == hits[0].score
         c.vindex_drop("native-vix")
     finally:
         c.close()
