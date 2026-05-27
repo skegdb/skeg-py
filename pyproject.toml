@@ -10,7 +10,7 @@ build-backend = "maturin"
 
 [project]
 name = "skeg"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python client for skeg (KV+vector store)."
 readme = "README.md"
 requires-python = ">=3.10"
